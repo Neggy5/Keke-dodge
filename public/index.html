@@ -1,52 +1,129 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07130d"><title>Keke Dodge — Abuja Multiplayer</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>Keke Dodge</title>
+<link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Figtree:wght@500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07130d;--card:#102219;--line:#244332;--ink:#edf7ef;--muted:#94ad9c;--gold:#f5bd3f;--green:#20c978}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 50% -10%,#164d31,#07130d 55%);color:var(--ink);font:15px system-ui,sans-serif}main{width:min(1050px,100%);margin:auto;padding:14px}.top{display:flex;justify-content:space-between;gap:10px;align-items:center}.brand h1{margin:0;font-size:1.65rem}.sub{margin:2px 0;color:var(--muted)}.hud{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.pill{padding:6px 9px;border:1px solid #ffffff18;border-radius:999px;background:#ffffff0d}.grid{display:grid;grid-template-columns:minmax(300px,440px) 1fr;gap:12px;margin-top:12px}.game{position:relative;border:2px solid #1d8e57;border-radius:18px;overflow:hidden;background:#06110a}.game canvas{display:block;width:100%;height:auto}.overlay{position:absolute;inset:0;background:#041009e8;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:22px}.overlay.hide{display:none}.overlay h2{font-size:2rem;margin:0 0 8px}.overlay p{max-width:320px;color:#c4d6c9}.controls{display:flex;gap:7px;margin-top:7px}.btn{border:0;border-radius:11px;padding:11px 14px;font-weight:800;cursor:pointer}.primary{background:var(--gold);color:#201600}.secondary{background:#ffffff12;color:var(--ink);border:1px solid #ffffff20}.controls button{flex:1;background:var(--card);color:var(--ink);border:1px solid var(--line)}.panel{background:#0d1d14cc;border:1px solid var(--line);border-radius:15px;padding:12px;margin-bottom:10px}.panel h2{font-size:1.05rem;margin:0 0 8px}.row{display:flex;gap:6px}.row input{flex:1;min-width:0;background:#08160e;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px}.list{margin:0;padding:0;list-style:none}.list li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #ffffff10}.muted,.status{color:var(--muted);font-size:.85rem}#msgs{height:190px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px;background:#07120b}.msg{margin:0 0 6px}.msg b{color:var(--gold)}#riders{display:grid;gap:5px}.rider{padding:6px 8px;border-radius:8px;background:#ffffff08;display:flex;justify-content:space-between}.note{text-align:center;color:var(--muted);font-size:.78rem}@media(max-width:700px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.hud{font-size:.78rem}}
-</style></head>
-<body><main>
-<header class="top"><div class="brand"><h1>🛺 Keke Dodge</h1><div class="sub">Abuja multiplayer traffic runner</div></div>
-<div class="hud"><span class="pill">👤 <b id="me">Guest</b></span><span class="pill">🏆 <b id="best">0</b></span><span class="pill">₦<b id="coins">0</b></span><span class="pill">🛡️ <b id="shields">1</b></span></div></header>
-<div class="panel" style="margin-top:10px"><div class="row"><input id="name" maxlength="16" placeholder="Choose your rider name"><button class="btn primary" id="profile">Create / update</button><button class="btn secondary" id="buy">Buy shield ₦50</button></div><div class="status" id="profileStatus">Your rider profile is stored persistently on the server.</div></div>
-<div class="grid"><section>
-<div class="game"><canvas id="c" width="360" height="560"></canvas><div class="overlay" id="ov"><h2 id="ot">Keke Dodge</h2><p id="os">Dodge taxis, danfos, okadas and potholes. Collect coins. Other riders appear live in your Abuja road session.</p><button class="btn primary" id="go">Start ride</button></div></div>
-<div class="controls"><button id="left">◀ Left</button><button id="pause">Ⅱ Pause</button><button id="right">Right ▶</button></div><p class="note">Swipe/tap or use ← → / A D. Space pauses.</p>
-</section><aside>
-<div class="panel"><h2>🏆 Abuja leaderboard</h2><ol class="list" id="lb"><li class="muted">Loading…</li></ol><p class="status" id="online">0 riders online</p></div>
-<div class="panel"><h2>🛺 Riders on the road</h2><div id="riders"><span class="muted">Start riding to enter the live road.</span></div></div>
-<div class="panel"><h2>💬 Live chat</h2><div id="msgs"></div><div class="row" style="margin-top:7px"><input id="ci" maxlength="200" placeholder="Say something…"><button class="btn primary" id="cs">Send</button></div></div>
-</aside></div></main>
+:root{--dust:#e9c48f;--ink:#241b16;--keke:#1f9d55;--sun:#ffcf33;--clay:#b4532a;--f:'Figtree',system-ui,sans-serif;--d:'Bowlby One',Impact,sans-serif}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--ink);color:#fff8ea;font:500 16px/1.4 var(--f);overflow:hidden;touch-action:none;user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%}
+.hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+.hud b{font:28px var(--d);letter-spacing:.5px;text-shadow:0 2px 0 var(--ink)}
+.hud small{display:block;font-weight:700;opacity:.85}
+.r{text-align:right}
+.scr{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:20px 18px calc(env(safe-area-inset-bottom,0px) + 18px);background:linear-gradient(transparent 5%,rgba(36,27,22,.92) 55%);overflow:auto;touch-action:pan-y}
+.scr.h{display:none}
+h1{font:clamp(44px,15vw,84px)/.9 var(--d);color:var(--sun);text-shadow:0 4px 0 var(--clay);transform:rotate(-2deg);margin-bottom:6px}
+.slogan{font:italic 700 18px var(--f);color:var(--dust);margin-bottom:14px}
+input,button{font:inherit;border:0;border-radius:14px}
+input{width:100%;padding:13px 14px;background:#fff8ea;color:var(--ink);margin-bottom:10px;font-weight:700}
+button{padding:14px 18px;background:var(--keke);color:#fff;font:19px var(--d);box-shadow:0 5px 0 #0f5f32}
+button:active{transform:translateY(4px);box-shadow:0 1px 0 #0f5f32}
+button.s{background:#4b3a30;box-shadow:0 5px 0 #2b211b;font:700 15px var(--f);padding:11px 14px}
+.row{display:flex;gap:10px;margin-top:10px}.row>*{flex:1}
+.box{background:rgba(255,248,234,.09);border-radius:14px;padding:10px 12px;margin-top:10px;max-height:34vh;overflow:auto}
+.box p{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.box p span:last-child{font-weight:700;color:var(--sun)}
+.me{color:var(--sun);font-weight:700}.err{color:#ff9d7a;min-height:20px}
+#chat input{margin:8px 0 0}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body>
+<canvas id="c"></canvas>
+<div class="hud" id="hud"><div><b id="sc">0</b><small id="zn">Wuse</small></div><div class="r"><b id="co">₦0</b><small id="sh"></small><small id="on"></small></div></div>
+
+<div class="scr" id="menu">
+ <h1>Keke<br>Dodge</h1><div class="slogan">Abuja no dey wait for anybody.</div>
+ <input id="nm" maxlength="16" placeholder="Rider name" autocomplete="off"><div class="err" id="er"></div>
+ <button id="go">Start riding</button>
+ <div class="row"><button class="s" id="bs">Buy shield ₦50</button><button class="s" id="bc">Chat</button></div>
+ <div class="box" id="lb"></div>
+ <div class="box" id="chat" style="display:none"><div id="msgs"></div><input id="mi" maxlength="200" placeholder="Say something"></div>
+ <div class="slogan" style="margin:12px 0 0;font-size:14px" id="me"></div>
+</div>
+<div class="scr h" id="over">
+ <h1 style="font-size:clamp(38px,12vw,64px)">Sharp!<br>Accident.</h1><div class="slogan" id="sg"></div>
+ <div class="box" id="res"></div><div class="row"><button id="again">Ride again</button><button class="s" id="home">Menu</button></div>
+</div>
+
 <script>
-const $=id=>document.getElementById(id),cv=$('c'),x=cv.getContext('2d'),W=360,H=560,LANES=[80,180,280],ZONES=[['Wuse','#1d5a36'],['Jabi','#1a4f56'],['Maitama','#3d5a1a'],['Garki','#594a1c'],['Asokoro','#314a4a']];
-let token=localStorage.kdToken||'',player=JSON.parse(localStorage.kdPlayer||'null'),st='ready',lane=1,px=180,obs=[],items=[],riders=new Map(),speed=235,dist=0,last=0,spawn=.5,score=0,coins=0,shield=0,combo=0,zone=0,runId=null,saveUsed=false;
-const api=(u,o={})=>{o.headers={...(o.headers||{}),...(token?{authorization:'Bearer '+token}:{})};return fetch(u,o).then(async r=>{const j=await r.json();if(!r.ok)throw j;return j})};
-function renderProfile(){if(player){$('me').textContent=player.name;$('name').value=player.name;$('best').textContent=player.best;$('coins').textContent=player.coins;$('shields').textContent=player.shieldTokens;$('profileStatus').textContent='Persistent rider identity active.'}else $('profileStatus').textContent='Create a rider name before starting.'}
-function rr(a,b,w,h,r,f){x.fillStyle=f;x.beginPath();x.roundRect(a,b,w,h,r);x.fill()}function car(cx,y,w,h,b,s){rr(cx-w/2,y,w,h,7,b);rr(cx-w/2+4,y+8,w-8,14,3,s)}
-function drawObj(o){let cx=LANES[o.l];if(o.k==='pothole'){rr(cx-10,o.y,20,25,5,'#c0392b');return}car(cx,o.y,o.w,o.h,o.k==='taxi'?'#eee':o.k==='danfo'?'#f2c200':'#222',o.k==='okada'?'#f04':'#0b6b3a')}
-function draw(){let z=ZONES[zone%ZONES.length];x.fillStyle='#07130d';x.fillRect(0,0,W,H);x.fillStyle=z[1];x.fillRect(0,0,60,H);x.fillRect(300,0,60,H);x.fillStyle='#2b2f2c';x.fillRect(60,0,240,H);x.fillStyle='#fff';x.fillRect(78,0,4, H);x.fillRect(278,0,4,H);for(let y=-60+(dist%120);y<H;y+=60){x.fillStyle='#fff8';x.fillRect(176,y,8,32)}
-items.forEach(i=>{x.fillStyle=i.t==='s'?'#20c978':'#f5bd3f';x.beginPath();x.arc(LANES[i.l],i.y,10,0,7);x.fill();x.fillStyle='#082';x.font='bold 12px system-ui';x.textAlign='center';x.fillText(i.t==='s'?'S':'₦',LANES[i.l],i.y+4)});
-obs.forEach(drawObj);for(const r of riders.values()){x.globalAlpha=.5;car(LANES[r.lane],H-70,30,40,'#b8d7ff','#264c70');x.globalAlpha=1;x.fillStyle='#fff';x.font='10px system-ui';x.textAlign='center';x.fillText(r.name.slice(0,10),LANES[r.lane],H-78)}car(px,H-70,30,40,'#f0b429','#0b6b3a');if(shield){x.strokeStyle='#6fdc96';x.lineWidth=3;x.beginPath();x.arc(px,H-50,29,0,7);x.stroke()}$('score').textContent=score;$('coins').textContent=coins+ (player?.coins||0)}
-function spawnObj(){let used=obs.map(o=>o.l),free=[0,1,2].filter(i=>!used.includes(i));if(!free.length)free=[0,1,2];obs.push({k:['taxi','danfo','okada','pothole'][Math.floor(Math.random()*4)],l:free[Math.floor(Math.random()*free.length)],y:-110,w:40+Math.random()*15,h:60+Math.random()*38,v:Math.random()*50})}
-function hit(o){return Math.abs(px-LANES[o.l])<28&&o.y+o.h>H-100&&o.y<H-30}
-function step(t){if(st!=='play')return;let dt=Math.min(.035,(t-last)/1000||0);last=t;dist+=speed*dt;speed=Math.min(560,speed+9*dt);spawn-=dt;if(spawn<=0){spawnObj();if(Math.random()<.45)items.push({t:Math.random()<.2?'s':'c',l:Math.floor(Math.random()*3),y:-20});spawn=Math.max(.34,1-speed/900)}obs.forEach(o=>o.y+=(speed+o.v)*dt);items.forEach(i=>i.y+=speed*dt);obs=obs.filter(o=>o.y<H+100);items=items.filter(i=>i.y<H+30);
-for(const i of items)if(Math.abs(px-LANES[i.l])<24&&i.y>H-100&&i.y<H-35){if(i.t==='c'){coins++;combo++}else shield=6;i.y=H+100}
-for(const o of obs)if(hit(o)){if(shield>0){shield=0;o.y=H+200;combo=0}else return over()}
-shield=Math.max(0,shield-dt);score=Math.floor(dist/10)+coins*12+combo*2;zone=Math.floor(dist/2500);draw();if(token)api('/api/multiplayer/state',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({lane,score,zone:ZONES[zone%ZONES.length][0]})}).catch(()=>{});requestAnimationFrame(step)}
-async function start(){if(!player){$('profileStatus').textContent='Create a rider profile first.';return}st='play';obs=[];items=[];lane=1;px=180;speed=235;dist=0;spawn=.5;score=0;coins=0;shield=0;combo=0;saveUsed=false;$('ov').classList.add('hide');try{runId=(await api('/api/run',{method:'POST'})).id}catch{}last=performance.now();requestAnimationFrame(step)}
-function pause(){if(st==='play'){st='pause';$('ot').textContent='Paused';$('os').textContent='Resume your ride.';$('go').textContent='Resume';$('ov').classList.remove('hide')}else if(st==='pause'){st='play';$('ov').classList.add('hide');last=performance.now();requestAnimationFrame(step)}}
-function over(){st='over';$('ot').textContent='Crash!';$('os').textContent=`Score ${score} • ₦${coins} collected`;$('go').textContent='Ride again';$('ov').classList.remove('hide');if(runId&&!saveUsed){api('/api/scores',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:runId,score,distance:Math.floor(dist),coins,combo})}).then(r=>{player=r.player;localStorage.kdPlayer=JSON.stringify(player);saveUsed=true;renderProfile();renderLb(r.leaderboard)}).catch(()=>{})}draw()}
-function move(d){if(st==='play'){lane=Math.max(0,Math.min(2,lane+d));px=LANES[lane]}}
-function renderLb(a){$('lb').innerHTML=a.map(v=>`<li><span>${v.rank}. ${esc(v.n)}</span><b>${v.s}</b></li>`).join('')||'<li class="muted">No scores yet</li>'}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function renderRiders(){let a=[...riders.values()];$('riders').innerHTML=a.length?a.map(r=>`<div class="rider"><span>🛺 ${esc(r.name)}</span><b>${r.score}</b></div>`).join(''):'<span class="muted">You are the only rider online.</span>'}
-$('profile').onclick=async()=>{try{let r=await api('/api/profile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:player?.id,name:$('name').value})});token=r.token;player=r.player;localStorage.kdToken=token;localStorage.kdPlayer=JSON.stringify(player);renderProfile();connect()}catch(e){$('profileStatus').textContent=e.error||'Could not create profile'}};
-$('buy').onclick=async()=>{try{player=await api('/api/shop',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({item:'shield'})});localStorage.kdPlayer=JSON.stringify(player);renderProfile()}catch(e){$('profileStatus').textContent=e.error||'Purchase failed'}};
-$('go').onclick=()=>st==='pause'?pause():start();$('pause').onclick=pause;$('left').onclick=()=>move(-1);$('right').onclick=()=>move(1);
-document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')move(-1);if(e.key==='ArrowRight'||e.key.toLowerCase()==='d')move(1);if(e.key===' ')pause()});
-let sx=0;cv.addEventListener('pointerdown',e=>sx=e.clientX);cv.addEventListener('pointerup',e=>{let d=e.clientX-sx;move(Math.abs(d)>18?(d>0?1:-1):(e.clientX<cv.getBoundingClientRect().left+cv.getBoundingClientRect().width/2?-1:1))});
-function addMsg(m){if(document.querySelector(`[data-id="${CSS.escape(m.id)}"]`))return;let p=document.createElement('p');p.className='msg';p.dataset.id=m.id;p.innerHTML=`<b>${esc(m.n)}</b>: ${esc(m.m)}`;$('msgs').append(p);while($('msgs').children.length>60)$('msgs').firstChild.remove();$('msgs').scrollTop=$('msgs').scrollHeight}
-async function connect(){if(!token)return;try{let p=await api('/api/profile');player=p;localStorage.kdPlayer=JSON.stringify(p);renderProfile()}catch{return}let es=new EventSource('/api/chat/stream');es.addEventListener('chat',e=>addMsg(JSON.parse(e.data)));es.addEventListener('online',e=>$('online').textContent=`${e.data} rider${e.data==1?'':'s'} online`);es.addEventListener('rider',e=>{let r=JSON.parse(e.data);riders.set(r.id,r);renderRiders()});es.onerror=()=>$('online').textContent='Reconnecting…'}
-$('cs').onclick=async()=>{let t=$('ci').value.trim();if(!t)return;try{await api('/api/chat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({text:t})});$('ci').value=''}catch(e){}};
-api('/api/scores').then(renderLb).catch(()=>{});api('/api/chat').then(a=>a.forEach(addMsg)).catch(()=>{});renderProfile();if(token)connect();draw();
+const $=id=>document.getElementById(id),cv=$('c'),g=cv.getContext('2d');
+let W,H,DPR;function size(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;g.setTransform(DPR,0,0,DPR,0,0)}size();addEventListener('resize',size);
+const LS=localStorage,ZONES=[['Wuse','#f3b46d','#f7dca8'],['Garki','#e88f5a','#f2c58f'],['Maitama','#9b6fa6','#e9b8a0'],['Asokoro','#3f4f86','#d9a27f']];
+const SLOG=['No condition is permanent.','God dey, keep dodging.','Slow and steady, but not today.','Hustle na the only religion.','Na the road teach me.','Trust no danfo.','Wetin concern keke with pothole?'];
+let me=LS.kdme?JSON.parse(LS.kdme):null,token=LS.kdtok||'',pl=null,es=null;
+async function api(p,b,m){const o={method:m||(b?'POST':'GET'),headers:{'content-type':'application/json',authorization:'Bearer '+token}};if(b)o.body=JSON.stringify(b);const r=await fetch(p,o);let j={};try{j=await r.json()}catch{}if(!r.ok)throw Object.assign(new Error(j.error||'error'),{code:r.status});return j}
+async function login(name){const j=await fetch('/api/profile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,id:me&&me.id})}).then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.error);return j});token=j.token;LS.kdtok=token;pl=j.player;me={id:pl.id,name:pl.name};LS.kdme=JSON.stringify(me);stream()}
+async function call(p,b){try{return await api(p,b)}catch(e){if(e.code===401&&me){await login(me.name);return api(p,b)}throw e}}
+function info(){$('me').textContent=pl?`${pl.name} · best ${pl.best} · ₦${pl.coins} · ${pl.shieldTokens} shield${pl.shieldTokens==1?'':'s'}`:''}
+function board(l){$('lb').innerHTML='<p><b>Top riders</b><span></span></p>'+(l.length?l.slice(0,8).map(x=>`<p class="${pl&&x.n==pl.name?'me':''}"><span>${x.rank}. ${x.n}</span><span>${x.s}</span></p>`).join(''):'<p>No scores yet. Be first.</p>')}
+async function loadB(){try{board(await fetch('/api/scores').then(r=>r.json()))}catch{}}
+function addMsg(m){const d=$('msgs');d.insertAdjacentHTML('beforeend',`<p style="display:block"><b>${m.n}</b> ${m.m}</p>`);while(d.children.length>30)d.firstChild.remove();d.parentElement.scrollTop=1e5}
+async function stream(){if(es)es.abort();es=new AbortController();try{const r=await fetch('/api/chat/stream',{headers:{authorization:'Bearer '+token},signal:es.signal});const rd=r.body.getReader(),dc=new TextDecoder();let buf='';for(;;){const{value,done}=await rd.read();if(done)break;buf+=dc.decode(value,{stream:true});let i;while((i=buf.indexOf('\n\n'))>=0){const blk=buf.slice(0,i);buf=buf.slice(i+2);const ev=(blk.match(/event: (.+)/)||[])[1],dt=(blk.match(/data: (.+)/)||[])[1];if(!ev||!dt)continue;const d=JSON.parse(dt);if(ev==='online')$('on').textContent=d+' riding';if(ev==='leaderboard')board(d);if(ev==='chat')addMsg(d);if(ev==='rider')rid[d.id]={...d,t:performance.now()}}}}catch{}setTimeout(()=>token&&stream(),4000)}
+const rid={};
+// ---------- audio
+let ac;function beep(f,t,v=.05,ty='square'){try{ac=ac||new AudioContext();const o=ac.createOscillator(),a=ac.createGain();o.type=ty;o.frequency.value=f;a.gain.setValueAtTime(v,ac.currentTime);a.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t);o.connect(a);a.connect(ac.destination);o.start();o.stop(ac.currentTime+t)}catch{}}
+// ---------- game
+let S=null,state='menu',lastT=0,runId=null;
+const LANE=()=>W*.30,HOR=()=>H*.36,GND=()=>H*.86;
+const proj=(lane,d)=>{const s=1/(1+d*.045);return{x:W/2+(lane-1)*LANE()*s,y:HOR()+(GND()-HOR())*s,s}};
+function reset(){S={dist:0,speed:20,lane:1,px:1,coins:0,near:0,shield:false,hit:0,obs:[],pk:[],gap:0,t:0,shake:0,zone:0,scroll:0,flash:0,pop:[]}}
+reset();
+function spawn(){const lanes=[0,1,2].sort(()=>Math.random()-.5),n=Math.random()<.35+Math.min(.3,S.dist/6000)?2:1;
+ for(let i=0;i<n;i++){const r=Math.random(),t=r<.38?'bus':r<.62?'okada':r<.82?'goat':'hole';S.obs.push({lane:lanes[i],d:75,t,w:0,ok:0})}
+ if(n<3){const l=lanes[n],r=Math.random();S.pk.push({lane:l,d:75+(Math.random()*8),t:r<.06?'sh':'c'});if(Math.random()<.5)for(let k=1;k<4;k++)S.pk.push({lane:l,d:75+k*5,t:'c'})}}
+function steer(dir){if(state!=='play')return;const l=Math.max(0,Math.min(2,S.lane+dir));if(l!==S.lane){S.lane=l;beep(520+l*90,.05,.03)}}
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key;if(k==='ArrowLeft'||k==='a')steer(-1);if(k==='ArrowRight'||k==='d')steer(1)});
+let tx=null;cv.addEventListener('pointerdown',e=>{tx=e.clientX;if(state==='play'&&e.pointerType==='mouse')steer(e.clientX<W/2?-1:1)});
+cv.addEventListener('pointermove',e=>{if(tx!=null&&Math.abs(e.clientX-tx)>28){steer(e.clientX>tx?1:-1);tx=e.clientX}});
+cv.addEventListener('pointerup',e=>{if(tx!=null&&Math.abs(e.clientX-tx)<=28&&e.pointerType!=='mouse')steer(e.clientX<W/2?-1:1);tx=null});
+async function start(){if(state==='play')return;$('menu').classList.add('h');$('over').classList.add('h');reset();
+ try{runId=(await call('/api/run',{})).id}catch{runId=null}
+ if(pl&&pl.shieldTokens>0){try{pl=await call('/api/use-shield',{});S.shield=true}catch{}}
+ state='play';lastT=performance.now();requestAnimationFrame(loop)}
+async function end(){state='over';navigator.vibrate&&navigator.vibrate(160);beep(110,.5,.09,'sawtooth');
+ const dist=Math.floor(S.dist),coins=Math.min(S.coins,250),score=Math.floor(dist/10)+coins*10+S.near*2;let msg='';
+ $('sg').textContent='“'+SLOG[Math.random()*SLOG.length|0]+'”';
+ if(runId){try{const r=await call('/api/scores',{id:runId,score,distance:dist,coins:S.coins,combo:S.near});pl=r.player;board(r.leaderboard);msg=`<p><span>Earned</span><span>₦${r.earned}</span></p>`}catch(e){msg='<p><span>Score not saved</span><span>'+e.message+'</span></p>'}}
+ $('res').innerHTML=`<p><span>Score</span><span>${score}</span></p><p><span>Distance</span><span>${dist} m</span></p><p><span>Near misses</span><span>${S.near}</span></p>${msg}`;
+ info();$('over').classList.remove('h');$('hud').style.opacity=.0;setTimeout(()=>$('hud').style.opacity=1,0)}
+function update(dt){const s=S;s.t+=dt;s.speed=Math.min(58,20+s.dist/90);s.dist+=s.speed*dt;s.scroll+=s.speed*dt;s.px+=(s.lane-s.px)*Math.min(1,dt*14);s.zone=Math.min(3,s.dist/1500|0);
+ s.gap-=s.speed*dt;if(s.gap<=0){spawn();s.gap=Math.max(11,26-s.dist/260)}
+ for(const o of s.obs){o.d-=s.speed*dt;if(!o.ok&&o.d<1.4&&o.d>-1.4&&Math.abs(o.lane-s.px)<.62){o.ok=1;if(s.shield){s.shield=false;s.flash=1;s.shake=10;beep(220,.2,.07);s.pop.push({txt:'shield!',t:1,l:o.lane});o.d=-9}else{s.hit=1;return end()}}
+  if(!o.ok&&o.d<0&&!o.nm){o.nm=1;if(Math.abs(o.lane-s.px)<1.15&&Math.abs(o.lane-s.px)>=.62&&o.t!=='hole'){s.near++;s.pop.push({txt:'close!',t:1,l:o.lane});beep(880,.06,.03)}}}
+ for(const p of s.pk){p.d-=s.speed*dt;if(!p.g&&p.d<1.4&&p.d>-1.4&&Math.abs(p.lane-s.px)<.7){p.g=1;if(p.t==='c'){s.coins++;beep(1040+Math.min(s.coins,12)*18,.07,.04,'triangle')}else{s.shield=true;s.pop.push({txt:'shield',t:1,l:p.lane});beep(660,.18,.06,'triangle')}}}
+ s.obs=s.obs.filter(o=>o.d>-12);s.pk=s.pk.filter(p=>p.d>-6&&!p.g);for(const q of s.pop)q.t-=dt*1.4;s.pop=s.pop.filter(q=>q.t>0);s.shake*=.88;s.flash*=.9;
+ if(pl&&s.t%.2<dt)call('/api/multiplayer/state',{lane:s.lane,score:Math.floor(s.dist/10)+s.coins*10,zone:ZONES[s.zone][0]}).catch(()=>{});
+ const sc=Math.floor(s.dist/10)+Math.min(s.coins,250)*10+s.near*2;$('sc').textContent=sc;$('co').textContent='₦'+s.coins;$('zn').textContent=ZONES[s.zone][0];$('sh').textContent=s.shield?'shield on':''}
+// ---- drawing
+function drawSky(z){const[,a,b]=ZONES[z],gr=g.createLinearGradient(0,0,0,HOR());gr.addColorStop(0,a);gr.addColorStop(1,b);g.fillStyle=gr;g.fillRect(0,0,W,HOR()+2);
+ g.fillStyle='rgba(255,248,234,.55)';g.beginPath();g.arc(W*.78,HOR()*.5,W*.07,0,7);g.fill();
+ const o=(S.scroll*.4)%W;g.fillStyle='rgba(36,27,22,.28)';for(const dx of[-W,0]){const x=dx-o;g.beginPath();g.moveTo(x,HOR());g.bezierCurveTo(x+W*.15,HOR()-H*.04,x+W*.2,HOR()-H*.17,x+W*.38,HOR()-H*.16);g.bezierCurveTo(x+W*.5,HOR()-H*.15,x+W*.52,HOR()-H*.06,x+W*.7,HOR()-H*.05);g.lineTo(x+W,HOR());g.fill()}}
+function drawRoad(){const h=HOR(),gd=GND();g.fillStyle='#b4532a';g.fillRect(0,h,W,H-h);
+ const a=proj(-.55,0),b=proj(-.55,200);g.fillStyle='#2f2823';g.beginPath();g.moveTo(W/2-LANE()*1.55,gd+(H-gd)*.9);g.lineTo(W/2-LANE()*1.55*.04,h);g.lineTo(W/2+LANE()*1.55*.04,h);g.lineTo(W/2+LANE()*1.55,gd+(H-gd)*.9);g.fill();
+ const off=S.scroll%10;for(let i=0;i<9;i++){const d=i*10-off;if(d<-1)continue;const p=proj(.5,d),q=proj(.5,d+4);g.fillStyle='#ffcf33';for(const l of[.5,1.5]){const A=proj(l,d),B=proj(l,d+4),w=Math.max(1,6*A.s);g.beginPath();g.moveTo(A.x-w,A.y);g.lineTo(A.x+w,A.y);g.lineTo(B.x+w*.6,B.y);g.lineTo(B.x-w*.6,B.y);g.fill()}
+  for(const side of[-.85,2.85]){const p=proj(side,d+3),hh=60*p.s*3;g.fillStyle='#241b16';g.fillRect(p.x-2*p.s,p.y-hh,4*p.s,hh);g.fillStyle='#1f9d55';g.beginPath();g.arc(p.x,p.y-hh,16*p.s*2,0,7);g.fill()}}}
+function box(x,y,w,h,c){g.fillStyle=c;g.fillRect(x,y,w,h)}
+function drawO(o){const p=proj(o.lane,o.d);if(p.s<.03)return;const s=p.s*(W/360)*1.45,x=p.x,y=p.y;
+ if(o.t==='hole'){g.fillStyle='#120d0a';g.beginPath();g.ellipse(x,y,38*s,10*s,0,0,7);g.fill();return}
+ if(o.t==='bus'){box(x-32*s,y-58*s,64*s,58*s,'#ffcf33');box(x-32*s,y-34*s,64*s,8*s,'#241b16');box(x-26*s,y-52*s,52*s,14*s,'#7fb6c9');box(x-30*s,y-6*s,14*s,8*s,'#120d0a');box(x+16*s,y-6*s,14*s,8*s,'#120d0a');return}
+ if(o.t==='okada'){box(x-5*s,y-44*s,10*s,34*s,'#241b16');g.fillStyle='#c0392b';g.fillRect(x-9*s,y-62*s,18*s,20*s);g.beginPath();g.arc(x,y-70*s,8*s,0,7);g.fillStyle='#241b16';g.fill();box(x-4*s,y-10*s,8*s,10*s,'#120d0a');return}
+ g.fillStyle='#fff8ea';g.beginPath();g.ellipse(x,y-18*s,22*s,14*s,0,0,7);g.fill();g.beginPath();g.arc(x+18*s,y-30*s,9*s,0,7);g.fill();box(x-14*s,y-8*s,4*s,10*s,'#241b16');box(x+8*s,y-8*s,4*s,10*s,'#241b16');box(x+22*s,y-42*s,3*s,9*s,'#241b16')}
+function drawP(p){const q=proj(p.lane,p.d);if(q.s<.03)return;const s=q.s*(W/360)*1.45,y=q.y-26*s;g.fillStyle=p.t==='c'?'#ffcf33':'#1f9d55';g.beginPath();g.arc(q.x,y,(p.t==='c'?12:15)*s,0,7);g.fill();g.strokeStyle='#241b16';g.lineWidth=2*s;g.stroke();if(p.t==='c'){g.fillStyle='#241b16';g.font=`${14*s}px Bowlby One,Impact`;g.textAlign='center';g.fillText('₦',q.x,y+5*s)}}
+function drawKeke(){const p=proj(S.px,0),s=(W/360)*1.5,x=p.x,y=GND()+(H-GND())*.55,lean=(S.lane-S.px)*.12;g.save();g.translate(x,y);g.rotate(lean);
+ g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,2*s,36*s,8*s,0,0,7);g.fill();
+ box(-30*s,-44*s,60*s,38*s,'#1f9d55');box(-30*s,-60*s,60*s,16*s,'#ffcf33');box(-24*s,-42*s,48*s,12*s,'#7fb6c9');box(-30*s,-20*s,60*s,5*s,'#fff8ea');
+ g.fillStyle='#120d0a';for(const wx of[-24,16]){g.fillRect(wx*s,-8*s,14*s,12*s)}
+ g.fillStyle='#fff8ea';g.font=`${7*s}px Figtree`;g.textAlign='center';g.fillText('GOD DEY',0,-23*s+0);
+ if(S.shield){g.strokeStyle='rgba(120,255,180,.9)';g.lineWidth=3*s;g.beginPath();g.ellipse(0,-30*s,46*s,44*s,0,0,7);g.stroke()}g.restore()}
+function loop(t){if(state!=='play')return;const dt=Math.min(.05,(t-lastT)/1000);lastT=t;update(dt);if(state!=='play')return;draw();requestAnimationFrame(loop)}
+function draw(){g.save();if(S.shake>.5)g.translate((Math.random()-.5)*S.shake,(Math.random()-.5)*S.shake);drawSky(S.zone);drawRoad();
+ const all=[...S.obs.map(o=>({d:o.d,f:()=>drawO(o)})),...S.pk.map(p=>({d:p.d,f:()=>drawP(p)}))].sort((a,b)=>b.d-a.d);for(const e of all)if(e.d>-1.5)e.f();drawKeke();
+ g.textAlign='center';for(const q of S.pop){const p=proj(q.l,3);g.globalAlpha=Math.min(1,q.t);g.fillStyle='#fff8ea';g.font='22px Bowlby One,Impact';g.fillText(q.txt,p.x,p.y-80-(1-q.t)*50)}g.globalAlpha=1;
+ if(S.flash>.05){g.fillStyle=`rgba(255,255,255,${S.flash*.5})`;g.fillRect(0,0,W,H)}g.restore()}
+function idle(t){if(state==='play')return;S.scroll+=.25;S.px=1;drawSky(0);drawRoad();drawKeke();requestAnimationFrame(idle)}
+// ---------- ui
+$('nm').value=me?me.name:'';
+async function go(){$('er').textContent='';const n=$('nm').value.trim();if(n.length<2){$('er').textContent='Pick a name (2+ letters)';return}try{if(!pl||pl.name!==n)await login(n);info();start()}catch(e){$('er').textContent=e.message==='name taken'?'That name is taken':e.message}}
+$('go').onclick=go;$('again').onclick=start;$('home').onclick=()=>{$('over').classList.add('h');$('menu').classList.remove('h');state='menu';reset();loadB();requestAnimationFrame(idle)};
+$('bs').onclick=async()=>{try{if(!pl)await login($('nm').value.trim()||'Rider');pl=await call('/api/shop',{item:'shield'});info();$('er').textContent=''}catch(e){$('er').textContent=e.message}};
+$('bc').onclick=()=>{const b=$('chat');b.style.display=b.style.display==='none'?'block':'none';if(!$('msgs').children.length)fetch('/api/chat').then(r=>r.json()).then(a=>a.slice(-20).forEach(addMsg))};
+$('mi').addEventListener('keydown',async e=>{if(e.key==='Enter'&&$('mi').value.trim()){try{await call('/api/chat',{text:$('mi').value});$('mi').value=''}catch(x){$('er').textContent=x.message}}});
+(async()=>{loadB();if(me&&token){try{pl=await api('/api/profile');stream()}catch{try{await login(me.name)}catch{}}info()}requestAnimationFrame(idle)})();
 </script></body></html>
