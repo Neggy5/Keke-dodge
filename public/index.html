@@ -69,10 +69,12 @@ function spawn(){const lanes=[0,1,2].sort(()=>Math.random()-.5),n=Math.random()<
  for(let i=0;i<n;i++){const r=Math.random(),t=r<.38?'bus':r<.62?'okada':r<.82?'goat':'hole';S.obs.push({lane:lanes[i],d:75,t,w:0,ok:0})}
  if(n<3){const l=lanes[n],r=Math.random();S.pk.push({lane:l,d:75+(Math.random()*8),t:r<.06?'sh':'c'});if(Math.random()<.5)for(let k=1;k<4;k++)S.pk.push({lane:l,d:75+k*5,t:'c'})}}
 function steer(dir){if(state!=='play')return;const l=Math.max(0,Math.min(2,S.lane+dir));if(l!==S.lane){S.lane=l;beep(520+l*90,.05,.03)}}
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;const k=e.key;if(k==='ArrowLeft'||k==='a')steer(-1);if(k==='ArrowRight'||k==='d')steer(1)});
-let tx=null;cv.addEventListener('pointerdown',e=>{tx=e.clientX;if(state==='play'&&e.pointerType==='mouse')steer(e.clientX<W/2?-1:1)});
-cv.addEventListener('pointermove',e=>{if(tx!=null&&Math.abs(e.clientX-tx)>28){steer(e.clientX>tx?1:-1);tx=e.clientX}});
-cv.addEventListener('pointerup',e=>{if(tx!=null&&Math.abs(e.clientX-tx)<=28&&e.pointerType!=='mouse')steer(e.clientX<W/2?-1:1);tx=null});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.repeat)return;const k=e.key;if(k==='ArrowLeft'||k==='a')steer(-1);if(k==='ArrowRight'||k==='d')steer(1)});
+let gx=null,gf=false;const TH=26;
+cv.addEventListener('pointerdown',e=>{gx=e.clientX;gf=false;try{cv.setPointerCapture(e.pointerId)}catch{}});
+cv.addEventListener('pointermove',e=>{if(gx==null||gf)return;const d=e.clientX-gx;if(Math.abs(d)>TH){gf=true;steer(d>0?1:-1)}});
+cv.addEventListener('pointerup',e=>{if(gx!=null&&!gf&&Math.abs(e.clientX-gx)<=TH)steer(e.clientX<W/2?-1:1);gx=null;gf=false});
+cv.addEventListener('pointercancel',()=>{gx=null;gf=false});
 async function start(){if(state==='play')return;$('menu').classList.add('h');$('over').classList.add('h');reset();
  try{runId=(await call('/api/run',{})).id}catch{runId=null}
  if(pl&&pl.shieldTokens>0){try{pl=await call('/api/use-shield',{});S.shield=true}catch{}}
