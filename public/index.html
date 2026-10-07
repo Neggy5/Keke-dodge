@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>Keke Dodge</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no"><title>Keke Dodge</title><meta name="theme-color" content="#241b16"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg"><link rel="apple-touch-icon" href="/icon.svg"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Bowlby+One&family=Figtree:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--dust:#e9c48f;--ink:#241b16;--keke:#1f9d55;--sun:#ffcf33;--clay:#b4532a;--f:'Figtree',system-ui,sans-serif;--d:'Bowlby One',Impact,sans-serif}
@@ -22,7 +22,7 @@ button.s{background:#4b3a30;box-shadow:0 5px 0 #2b211b;font:700 15px var(--f);pa
 .box{background:rgba(255,248,234,.09);border-radius:14px;padding:10px 12px;margin-top:10px;max-height:34vh;overflow:auto}
 .box p{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.box p span:last-child{font-weight:700;color:var(--sun)}
 .me{color:var(--sun);font-weight:700}.err{color:#ff9d7a;min-height:20px}
-#chat input{margin:8px 0 0}
+#chat input{margin:8px 0 0}.w{flex-wrap:wrap}.w>*{flex:1 1 40%}button.on{outline:3px solid var(--sun)}button.s small{display:block;font-weight:500;opacity:.8}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <canvas id="c"></canvas>
@@ -31,8 +31,8 @@ button.s{background:#4b3a30;box-shadow:0 5px 0 #2b211b;font:700 15px var(--f);pa
 <div class="scr" id="menu">
  <h1>Keke<br>Dodge</h1><div class="slogan">Abuja no dey wait for anybody.</div>
  <input id="nm" maxlength="16" placeholder="Rider name" autocomplete="off"><div class="err" id="er"></div>
- <button id="go">Start riding</button>
- <div class="row"><button class="s" id="bs">Buy shield ₦50</button><button class="s" id="bc">Chat</button></div>
+ <button id="go">Start riding</button><button class="s" id="dg" style="width:100%;margin-top:10px">Daily ride</button><div class="row w" id="sk"></div>
+ <div class="row"><button class="s" id="bs">Buy shield ₦50</button><button class="s" id="bc">Chat</button></div><div class="row"><button class="s" id="bm">Sound on</button><button class="s" id="bi" style="display:none">Install app</button></div><div class="box" id="dl"></div>
  <div class="box" id="lb"></div>
  <div class="box" id="chat" style="display:none"><div id="msgs"></div><input id="mi" maxlength="200" placeholder="Say something"></div>
  <div class="slogan" style="margin:12px 0 0;font-size:14px" id="me"></div>
@@ -51,23 +51,29 @@ let me=LS.kdme?JSON.parse(LS.kdme):null,token=LS.kdtok||'',pl=null,es=null;
 async function api(p,b,m){const o={method:m||(b?'POST':'GET'),headers:{'content-type':'application/json',authorization:'Bearer '+token}};if(b)o.body=JSON.stringify(b);const r=await fetch(p,o);let j={};try{j=await r.json()}catch{}if(!r.ok)throw Object.assign(new Error(j.error||'error'),{code:r.status});return j}
 async function login(name){const j=await fetch('/api/profile',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name,id:me&&me.id})}).then(async r=>{const j=await r.json();if(!r.ok)throw new Error(j.error);return j});token=j.token;LS.kdtok=token;pl=j.player;me={id:pl.id,name:pl.name};LS.kdme=JSON.stringify(me);stream()}
 async function call(p,b){try{return await api(p,b)}catch(e){if(e.code===401&&me){await login(me.name);return api(p,b)}throw e}}
-function info(){$('me').textContent=pl?`${pl.name} · best ${pl.best} · ₦${pl.coins} · ${pl.shieldTokens} shield${pl.shieldTokens==1?'':'s'}`:''}
+function info(){$('me').textContent=pl?`${pl.name} · best ${pl.best} · ₦${pl.coins} · ${pl.shieldTokens} shield${pl.shieldTokens==1?'':'s'}${pl.streak?` · ${pl.streak}-day streak`:''}`:'';skins();$('dg').textContent=pl&&pl.dailyDone?'Daily ride (beat your score)':'Daily ride'}
+function skins(){const o=pl?pl.skins:['green'];$('sk').innerHTML=Object.entries(SK).map(([k,v])=>`<button class="s ${pl&&pl.skin===k?'on':''}" data-k="${k}">${v[0]}<small>${o.includes(k)?(pl&&pl.skin===k?'Riding':'Owned'):'₦'+v[3]}</small></button>`).join('')}
+function dboard(l){$('dl').innerHTML="<p><b>Today's daily ride</b><span></span></p>"+(l.length?l.map(x=>`<p class="${pl&&x.n==pl.name?'me':''}"><span>${x.rank}. ${x.n}</span><span>${x.s}</span></p>`).join(''):'<p>Nobody has ridden today. Be first.</p>')}
+async function loadD(){try{dboard((await fetch('/api/daily').then(r=>r.json())).board)}catch{}}
 function board(l){$('lb').innerHTML='<p><b>Top riders</b><span></span></p>'+(l.length?l.slice(0,8).map(x=>`<p class="${pl&&x.n==pl.name?'me':''}"><span>${x.rank}. ${x.n}</span><span>${x.s}</span></p>`).join(''):'<p>No scores yet. Be first.</p>')}
 async function loadB(){try{board(await fetch('/api/scores').then(r=>r.json()))}catch{}}
 function addMsg(m){const d=$('msgs');d.insertAdjacentHTML('beforeend',`<p style="display:block"><b>${m.n}</b> ${m.m}</p>`);while(d.children.length>30)d.firstChild.remove();d.parentElement.scrollTop=1e5}
 async function stream(){if(es)es.abort();es=new AbortController();try{const r=await fetch('/api/chat/stream',{headers:{authorization:'Bearer '+token},signal:es.signal});const rd=r.body.getReader(),dc=new TextDecoder();let buf='';for(;;){const{value,done}=await rd.read();if(done)break;buf+=dc.decode(value,{stream:true});let i;while((i=buf.indexOf('\n\n'))>=0){const blk=buf.slice(0,i);buf=buf.slice(i+2);const ev=(blk.match(/event: (.+)/)||[])[1],dt=(blk.match(/data: (.+)/)||[])[1];if(!ev||!dt)continue;const d=JSON.parse(dt);if(ev==='online')$('on').textContent=d+' riding';if(ev==='leaderboard')board(d);if(ev==='chat')addMsg(d);if(ev==='rider')rid[d.id]={...d,t:performance.now()}}}}catch{}setTimeout(()=>token&&stream(),4000)}
 const rid={};
 // ---------- audio
-let ac;function beep(f,t,v=.05,ty='square'){try{ac=ac||new AudioContext();const o=ac.createOscillator(),a=ac.createGain();o.type=ty;o.frequency.value=f;a.gain.setValueAtTime(v,ac.currentTime);a.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t);o.connect(a);a.connect(ac.destination);o.start();o.stop(ac.currentTime+t)}catch{}}
+let ac;function beep(f,t,v=.05,ty='square'){if(LS.kdmute==='1')return;try{ac=ac||new AudioContext();const o=ac.createOscillator(),a=ac.createGain();o.type=ty;o.frequency.value=f;a.gain.setValueAtTime(v,ac.currentTime);a.gain.exponentialRampToValueAtTime(.001,ac.currentTime+t);o.connect(a);a.connect(ac.destination);o.start();o.stop(ac.currentTime+t)}catch{}}
 // ---------- game
-let S=null,state='menu',lastT=0,runId=null;
+let S=null,state='menu',lastT=0,runId=null,daily=false,rnd=Math.random;
+const mul=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const SK={green:['Green','#1f9d55','#ffcf33',0],lagos:['Lagos yellow','#ffcf33','#241b16',150],midnight:['Midnight','#2b3a67','#e9c48f',250],gold:['Gold','#e0a82e','#fff3c4',400]};
+const buzz=n=>{try{LS.kdmute!=='1'&&navigator.vibrate&&navigator.vibrate(n)}catch{}};
 const LANE=()=>W*.30,HOR=()=>H*.36,GND=()=>H*.86;
 const proj=(lane,d)=>{const s=1/(1+d*.045);return{x:W/2+(lane-1)*LANE()*s,y:HOR()+(GND()-HOR())*s,s}};
 function reset(){S={dist:0,speed:20,lane:1,px:1,coins:0,near:0,shield:false,hit:0,obs:[],pk:[],gap:0,t:0,shake:0,zone:0,scroll:0,flash:0,pop:[]}}
 reset();
-function spawn(){const lanes=[0,1,2].sort(()=>Math.random()-.5),n=Math.random()<.35+Math.min(.3,S.dist/6000)?2:1;
- for(let i=0;i<n;i++){const r=Math.random(),t=r<.38?'bus':r<.62?'okada':r<.82?'goat':'hole';S.obs.push({lane:lanes[i],d:75,t,w:0,ok:0})}
- if(n<3){const l=lanes[n],r=Math.random();S.pk.push({lane:l,d:75+(Math.random()*8),t:r<.06?'sh':'c'});if(Math.random()<.5)for(let k=1;k<4;k++)S.pk.push({lane:l,d:75+k*5,t:'c'})}}
+function spawn(){const lanes=[0,1,2].sort(()=>rnd()-.5),n=rnd()<.35+Math.min(.3,S.dist/6000)?2:1;
+ for(let i=0;i<n;i++){const r=rnd(),t=r<.38?'bus':r<.62?'okada':r<.82?'goat':'hole';S.obs.push({lane:lanes[i],d:75,t,w:0,ok:0})}
+ if(n<3){const l=lanes[n],r=rnd();S.pk.push({lane:l,d:75+(rnd()*8),t:r<.06?'sh':'c'});if(rnd()<.5)for(let k=1;k<4;k++)S.pk.push({lane:l,d:75+k*5,t:'c'})}}
 function steer(dir){if(state!=='play')return;const l=Math.max(0,Math.min(2,S.lane+dir));if(l!==S.lane){S.lane=l;beep(520+l*90,.05,.03)}}
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.repeat)return;const k=e.key;if(k==='ArrowLeft'||k==='a')steer(-1);if(k==='ArrowRight'||k==='d')steer(1)});
 let gx=null,gf=false;const TH=26;
@@ -76,20 +82,20 @@ cv.addEventListener('pointermove',e=>{if(gx==null||gf)return;const d=e.clientX-g
 cv.addEventListener('pointerup',e=>{if(gx!=null&&!gf&&Math.abs(e.clientX-gx)<=TH)steer(e.clientX<W/2?-1:1);gx=null;gf=false});
 cv.addEventListener('pointercancel',()=>{gx=null;gf=false});
 async function start(){if(state==='play')return;$('menu').classList.add('h');$('over').classList.add('h');reset();
- try{runId=(await call('/api/run',{})).id}catch{runId=null}
+ rnd=Math.random;try{const r=await call('/api/run',{daily});runId=r.id;if(daily&&r.seed)rnd=mul(r.seed)}catch{runId=null}
  if(pl&&pl.shieldTokens>0){try{pl=await call('/api/use-shield',{});S.shield=true}catch{}}
  state='play';lastT=performance.now();requestAnimationFrame(loop)}
 async function end(){state='over';navigator.vibrate&&navigator.vibrate(160);beep(110,.5,.09,'sawtooth');
  const dist=Math.floor(S.dist),coins=Math.min(S.coins,250),score=Math.floor(dist/10)+coins*10+S.near*2;let msg='';
  $('sg').textContent='“'+SLOG[Math.random()*SLOG.length|0]+'”';
- if(runId){try{const r=await call('/api/scores',{id:runId,score,distance:dist,coins:S.coins,combo:S.near});pl=r.player;board(r.leaderboard);msg=`<p><span>Earned</span><span>₦${r.earned}</span></p>`}catch(e){msg='<p><span>Score not saved</span><span>'+e.message+'</span></p>'}}
+ if(runId){try{const r=await call('/api/scores',{id:runId,score,distance:dist,coins:S.coins,combo:S.near,daily});pl=r.player;board(r.leaderboard);msg=`<p><span>Earned</span><span>₦${r.earned}</span></p>`+(r.bonus?`<p><span>Daily streak ${pl.streak} day${pl.streak==1?'':'s'}</span><span>+₦${r.bonus}</span></p>`:'')+(daily?`<p><span>Today's best</span><span>${pl.dailyBest}</span></p>`:'');if(r.daily)dboard(r.daily)}catch(e){msg='<p><span>Score not saved</span><span>'+e.message+'</span></p>'}}
  $('res').innerHTML=`<p><span>Score</span><span>${score}</span></p><p><span>Distance</span><span>${dist} m</span></p><p><span>Near misses</span><span>${S.near}</span></p>${msg}`;
  info();$('over').classList.remove('h');$('hud').style.opacity=.0;setTimeout(()=>$('hud').style.opacity=1,0)}
 function update(dt){const s=S;s.t+=dt;s.speed=Math.min(58,20+s.dist/90);s.dist+=s.speed*dt;s.scroll+=s.speed*dt;s.px+=(s.lane-s.px)*Math.min(1,dt*14);s.zone=Math.min(3,s.dist/1500|0);
  s.gap-=s.speed*dt;if(s.gap<=0){spawn();s.gap=Math.max(11,26-s.dist/260)}
  for(const o of s.obs){o.d-=s.speed*dt;if(!o.ok&&o.d<1.4&&o.d>-1.4&&Math.abs(o.lane-s.px)<.62){o.ok=1;if(s.shield){s.shield=false;s.flash=1;s.shake=10;beep(220,.2,.07);s.pop.push({txt:'shield!',t:1,l:o.lane});o.d=-9}else{s.hit=1;return end()}}
-  if(!o.ok&&o.d<0&&!o.nm){o.nm=1;if(Math.abs(o.lane-s.px)<1.15&&Math.abs(o.lane-s.px)>=.62&&o.t!=='hole'){s.near++;s.pop.push({txt:'close!',t:1,l:o.lane});beep(880,.06,.03)}}}
- for(const p of s.pk){p.d-=s.speed*dt;if(!p.g&&p.d<1.4&&p.d>-1.4&&Math.abs(p.lane-s.px)<.7){p.g=1;if(p.t==='c'){s.coins++;beep(1040+Math.min(s.coins,12)*18,.07,.04,'triangle')}else{s.shield=true;s.pop.push({txt:'shield',t:1,l:p.lane});beep(660,.18,.06,'triangle')}}}
+  if(!o.ok&&o.d<0&&!o.nm){o.nm=1;if(Math.abs(o.lane-s.px)<1.15&&Math.abs(o.lane-s.px)>=.62&&o.t!=='hole'){s.near++;buzz(14);s.pop.push({txt:'close!',t:1,l:o.lane});beep(880,.06,.03)}}}
+ for(const p of s.pk){p.d-=s.speed*dt;if(!p.g&&p.d<1.4&&p.d>-1.4&&Math.abs(p.lane-s.px)<.7){p.g=1;if(p.t==='c'){s.coins++;buzz(8);beep(1040+Math.min(s.coins,12)*18,.07,.04,'triangle')}else{s.shield=true;s.pop.push({txt:'shield',t:1,l:p.lane});beep(660,.18,.06,'triangle')}}}
  s.obs=s.obs.filter(o=>o.d>-12);s.pk=s.pk.filter(p=>p.d>-6&&!p.g);for(const q of s.pop)q.t-=dt*1.4;s.pop=s.pop.filter(q=>q.t>0);s.shake*=.88;s.flash*=.9;
  if(pl&&s.t%.2<dt)call('/api/multiplayer/state',{lane:s.lane,score:Math.floor(s.dist/10)+s.coins*10,zone:ZONES[s.zone][0]}).catch(()=>{});
  const sc=Math.floor(s.dist/10)+Math.min(s.coins,250)*10+s.near*2;$('sc').textContent=sc;$('co').textContent='₦'+s.coins;$('zn').textContent=ZONES[s.zone][0];$('sh').textContent=s.shield?'shield on':''}
@@ -110,7 +116,7 @@ function drawO(o){const p=proj(o.lane,o.d);if(p.s<.03)return;const s=p.s*(W/360)
 function drawP(p){const q=proj(p.lane,p.d);if(q.s<.03)return;const s=q.s*(W/360)*1.45,y=q.y-26*s;g.fillStyle=p.t==='c'?'#ffcf33':'#1f9d55';g.beginPath();g.arc(q.x,y,(p.t==='c'?12:15)*s,0,7);g.fill();g.strokeStyle='#241b16';g.lineWidth=2*s;g.stroke();if(p.t==='c'){g.fillStyle='#241b16';g.font=`${14*s}px Bowlby One,Impact`;g.textAlign='center';g.fillText('₦',q.x,y+5*s)}}
 function drawKeke(){const p=proj(S.px,0),s=(W/360)*1.5,x=p.x,y=GND()+(H-GND())*.55,lean=(S.lane-S.px)*.12;g.save();g.translate(x,y);g.rotate(lean);
  g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,2*s,36*s,8*s,0,0,7);g.fill();
- box(-30*s,-44*s,60*s,38*s,'#1f9d55');box(-30*s,-60*s,60*s,16*s,'#ffcf33');box(-24*s,-42*s,48*s,12*s,'#7fb6c9');box(-30*s,-20*s,60*s,5*s,'#fff8ea');
+ const K=SK[(pl&&pl.skin)||'green']||SK.green;box(-30*s,-44*s,60*s,38*s,K[1]);box(-30*s,-60*s,60*s,16*s,K[2]);box(-24*s,-42*s,48*s,12*s,'#7fb6c9');box(-30*s,-20*s,60*s,5*s,'#fff8ea');
  g.fillStyle='#120d0a';for(const wx of[-24,16]){g.fillRect(wx*s,-8*s,14*s,12*s)}
  g.fillStyle='#fff8ea';g.font=`${7*s}px Figtree`;g.textAlign='center';g.fillText('GOD DEY',0,-23*s+0);
  if(S.shield){g.strokeStyle='rgba(120,255,180,.9)';g.lineWidth=3*s;g.beginPath();g.ellipse(0,-30*s,46*s,44*s,0,0,7);g.stroke()}g.restore()}
@@ -123,7 +129,12 @@ function idle(t){if(state==='play')return;S.scroll+=.25;S.px=1;drawSky(0);drawRo
 // ---------- ui
 $('nm').value=me?me.name:'';
 async function go(){$('er').textContent='';const n=$('nm').value.trim();if(n.length<2){$('er').textContent='Pick a name (2+ letters)';return}try{if(!pl||pl.name!==n)await login(n);info();start()}catch(e){$('er').textContent=e.message==='name taken'?'That name is taken':e.message}}
-$('go').onclick=go;$('again').onclick=start;$('home').onclick=()=>{$('over').classList.add('h');$('menu').classList.remove('h');state='menu';reset();loadB();requestAnimationFrame(idle)};
+$('go').onclick=()=>{daily=false;go()};$('dg').onclick=()=>{daily=true;go()};$('again').onclick=()=>start();skins();loadD();
+$('sk').onclick=async e=>{const k=e.target.closest('button')?.dataset.k;if(!k)return;try{if(!pl)await login($('nm').value.trim()||'Rider');pl=await call('/api/skin',{id:k});info();$('er').textContent=''}catch(x){$('er').textContent=x.message}};
+const mt=()=>$('bm').textContent=LS.kdmute==='1'?'Sound off':'Sound on';mt();$('bm').onclick=()=>{LS.kdmute=LS.kdmute==='1'?'0':'1';mt()};
+let ip=null;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('bi').style.display=''});$('bi').onclick=async()=>{if(ip){ip.prompt();ip=null;$('bi').style.display='none'}};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+$('home').onclick=()=>{$('over').classList.add('h');$('menu').classList.remove('h');state='menu';reset();loadB();loadD();requestAnimationFrame(idle)};
 $('bs').onclick=async()=>{try{if(!pl)await login($('nm').value.trim()||'Rider');pl=await call('/api/shop',{item:'shield'});info();$('er').textContent=''}catch(e){$('er').textContent=e.message}};
 $('bc').onclick=()=>{const b=$('chat');b.style.display=b.style.display==='none'?'block':'none';if(!$('msgs').children.length)fetch('/api/chat').then(r=>r.json()).then(a=>a.slice(-20).forEach(addMsg))};
 $('mi').addEventListener('keydown',async e=>{if(e.key==='Enter'&&$('mi').value.trim()){try{await call('/api/chat',{text:$('mi').value});$('mi').value=''}catch(x){$('er').textContent=x.message}}});
