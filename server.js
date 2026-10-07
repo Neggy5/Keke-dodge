@@ -1,4 +1,4 @@
-// Keke Dodge Online v4 — multiplayer Abuja runner
+// Keke Dodge Online v5 — multiplayer Abuja runner
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const PORT=Number(process.env.PORT||3000),DIR=process.env.DATA_DIR||path.join(__dirname,'data'),FILE=path.join(DIR,'db.json'),MAX_BODY=12000;
 fs.mkdirSync(DIR,{recursive:true});
@@ -14,6 +14,7 @@ const ip=req=>(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').spl
 const limits=new Map(),runs=new Map(),sessions=new Map(),clients=new Map();
 function rate(req,a,ms){const k=ip(req)+':'+a,n=Date.now(),l=limits.get(k)||0;if(n-l<ms)return true;limits.set(k,n);return false}
 setInterval(()=>{const c=Date.now()-120000;for(const[k,v]of limits)if(v<c)limits.delete(k);for(const[k,v]of runs)if(v.at<c)runs.delete(k)},60000);
+function json2(res,o,t){res.writeHead(200,{'content-type':t+'; charset=utf-8','cache-control':'no-cache'});res.end(JSON.stringify(o))}
 function json(res,c,o){res.writeHead(c,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify(o))}
 async function body(req){let s='';for await(const ch of req){s+=ch;if(Buffer.byteLength(s)>MAX_BODY)return{}}try{return JSON.parse(s)}catch{return{}}}
 function newId(){return crypto.randomBytes(12).toString('hex')}
@@ -25,13 +26,17 @@ function send(c,event,data){try{c.write(`event: ${event}\ndata: ${JSON.stringify
 function broadcast(event,data,except){for(const[c]of clients)if(c!==except)send(c,event,data)}
 function validName(n){return clean(n,16).replace(/[^a-zA-Z0-9 _.-]/g,'').trim()}
 function unique(n,id){return !db.players.some(p=>p.id!==id&&p.name.toLowerCase()===n.toLowerCase())}
-function publicPlayer(p){return{id:p.id,name:p.name,coins:p.coins,best:p.best,shieldTokens:p.shieldTokens}}
+const day=(o=0)=>new Date(Date.now()+o*864e5).toISOString().slice(0,10);
+const seedOf=d=>{let h=2166136261;for(const c of 'keke'+d){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const SKINS={green:0,lagos:150,midnight:250,gold:400};
+function publicPlayer(p){const t=day();return{id:p.id,name:p.name,coins:p.coins,best:p.best,shieldTokens:p.shieldTokens,skin:p.skin||'green',skins:['green',...(p.skins||[])],streak:p.lastDaily===t||p.lastDaily===day(-1)?(p.streak||0):0,dailyDone:p.lastDaily===t,dailyBest:p.daily&&p.daily.day===t?p.daily.best:0}}
+function dailyBoard(){const t=day();return db.players.filter(p=>p.daily&&p.daily.day===t).sort((a,b)=>b.daily.best-a.daily.best).slice(0,10).map((p,i)=>({rank:i+1,n:p.name,s:p.daily.best}))}
 
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost'),p=u.pathname;
  if(req.method==='OPTIONS'){res.writeHead(204,{'access-control-allow-origin':'*','access-control-allow-headers':'content-type,authorization'});return res.end()}
  if(req.method==='GET'&&(p==='/'||p==='/index.html'))return fs.readFile(path.join(__dirname,'public','index.html'),(e,b)=>{if(e)return json(res,500,{error:'missing index.html'});res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache'});res.end(b)});
- if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:4,uptime:Math.round(process.uptime()),time:Date.now()});
+ if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:5,uptime:Math.round(process.uptime()),time:Date.now()});
  if(req.method==='GET'&&p==='/api/stats')return json(res,200,stats());
 
  if(p==='/api/profile'&&req.method==='POST'){
@@ -47,9 +52,19 @@ const server=http.createServer(async(req,res)=>{
  if(p==='/api/profile'&&req.method==='GET'){const pl=player(req);if(!pl)return json(res,401,{error:'unauthorized'});return json(res,200,publicPlayer(pl))}
  if(p==='/api/run'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'run',800))return json(res,429,{error:'slow down'});
-   const id=newId();runs.set(id,{player:pl.id,at:Date.now()});return json(res,200,{id})
+   const b=await body(req),id=newId();runs.set(id,{player:pl.id,at:Date.now(),daily:b.daily?day():null});return json(res,200,{id,...(b.daily?{seed:seedOf(day())}:{})})
  }
  if(p==='/api/scores'&&req.method==='GET')return json(res,200,top());
+ if(p==='/api/daily'&&req.method==='GET')return json(res,200,{day:day(),board:dailyBoard()});
+ if(p==='/api/skin'&&req.method==='POST'){
+   const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'skin',500))return json(res,429,{error:'slow down'});
+   const b=await body(req),id=String(b.id||'');if(!(id in SKINS))return json(res,400,{error:'unknown skin'});
+   pl.skins=pl.skins||[];if(id!=='green'&&!pl.skins.includes(id)){if(pl.coins<SKINS[id])return json(res,400,{error:'need ₦'+SKINS[id]});pl.coins-=SKINS[id];pl.skins.push(id)}
+   pl.skin=id;dirty=true;return json(res,200,publicPlayer(pl))
+ }
+ if(req.method==='GET'&&p==='/manifest.webmanifest')return json2(res,{name:'Keke Dodge',short_name:'Keke Dodge',start_url:'/',display:'standalone',orientation:'portrait',background_color:'#241b16',theme_color:'#241b16',icons:[{src:'/icon.svg',sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]},'application/manifest+json');
+ if(req.method==='GET'&&p==='/icon.svg'){res.writeHead(200,{'content-type':'image/svg+xml','cache-control':'public,max-age=86400'});return res.end(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#241b16"/><rect x="96" y="150" width="320" height="40" fill="#ffcf33"/><rect x="96" y="190" width="320" height="170" fill="#1f9d55"/><rect x="130" y="205" width="252" height="60" fill="#7fb6c9"/><rect x="96" y="300" width="320" height="22" fill="#fff8ea"/><rect x="120" y="360" width="70" height="60" fill="#120d0a"/><rect x="322" y="360" width="70" height="60" fill="#120d0a"/></svg>`)}
+ if(req.method==='GET'&&p==='/sw.js'){res.writeHead(200,{'content-type':'text/javascript','cache-control':'no-cache'});return res.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',()=>{});")}
  if(p==='/api/scores'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'score',1000))return json(res,429,{error:'slow down'});
    const b=await body(req),r=runs.get(String(b.id||'')),score=Math.floor(Number(b.score)),distance=Math.floor(Number(b.distance));
@@ -58,8 +73,9 @@ const server=http.createServer(async(req,res)=>{
    const earned=Math.max(0,Math.min(250,Math.floor(Number(b.coins)||0)));
    if(sec<1||distance>maxDist||score>distance/10+earned*12+Number(b.combo||0)*2+100)return json(res,400,{error:'score validation failed'});
    if(score>pl.best)pl.best=score;
-   pl.coins+=earned;db.scores.push({player:pl.id,s:score,t:Date.now()});db.scores=db.scores.slice(-500);dirty=true;
-   const result=top();broadcast('leaderboard',result);return json(res,200,{leaderboard:result,player:publicPlayer(pl),earned});
+   let bonus=0;if(r.daily&&(r.daily===day()||r.daily===day(-1))){const d=r.daily;if(!pl.daily||pl.daily.day!==d)pl.daily={day:d,best:0};if(score>pl.daily.best)pl.daily.best=score;if(pl.lastDaily!==d){pl.streak=pl.lastDaily&&new Date(d)-new Date(pl.lastDaily)===864e5?(pl.streak||0)+1:1;pl.lastDaily=d;bonus=10*Math.min(pl.streak,7)}}
+   pl.coins+=earned+bonus;db.scores.push({player:pl.id,s:score,t:Date.now()});db.scores=db.scores.slice(-500);dirty=true;
+   const result=top();broadcast('leaderboard',result);return json(res,200,{leaderboard:result,player:publicPlayer(pl),earned,bonus,daily:dailyBoard()});
  }
  if(p==='/api/shop'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'shop',700))return json(res,429,{error:'slow down'});

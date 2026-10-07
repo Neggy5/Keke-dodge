@@ -1,1 +1,1 @@
-{"name":"keke-dodge-online","version":"4.0.0","description":"Keke Dodge: multiplayer Abuja traffic runner","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
+{"name":"keke-dodge-online","version":"5.0.0","description":"Keke Dodge: multiplayer Abuja traffic runner","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
