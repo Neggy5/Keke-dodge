@@ -1,0 +1,12 @@
+{
+  "name": "keke-dodge-online",
+  "version": "2.0.0",
+  "description": "Keke Dodge Abuja traffic runner with persistent leaderboard and live chat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
