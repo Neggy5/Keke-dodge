@@ -1,4 +1,4 @@
-// Keke Dodge Online v3 — multiplayer Abuja runner
+// Keke Dodge Online v4 — multiplayer Abuja runner
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const PORT=Number(process.env.PORT||3000),DIR=process.env.DATA_DIR||path.join(__dirname,'data'),FILE=path.join(DIR,'db.json'),MAX_BODY=12000;
 fs.mkdirSync(DIR,{recursive:true});
@@ -31,7 +31,7 @@ const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost'),p=u.pathname;
  if(req.method==='OPTIONS'){res.writeHead(204,{'access-control-allow-origin':'*','access-control-allow-headers':'content-type,authorization'});return res.end()}
  if(req.method==='GET'&&(p==='/'||p==='/index.html'))return fs.readFile(path.join(__dirname,'public','index.html'),(e,b)=>{if(e)return json(res,500,{error:'missing index.html'});res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache'});res.end(b)});
- if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:3,uptime:Math.round(process.uptime()),time:Date.now()});
+ if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:4,uptime:Math.round(process.uptime()),time:Date.now()});
  if(req.method==='GET'&&p==='/api/stats')return json(res,200,stats());
 
  if(p==='/api/profile'&&req.method==='POST'){
@@ -65,6 +65,7 @@ const server=http.createServer(async(req,res)=>{
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'shop',700))return json(res,429,{error:'slow down'});
    const b=await body(req);if(b.item==='shield'){if(pl.coins<50)return json(res,400,{error:'need 50 coins'});pl.coins-=50;pl.shieldTokens++;dirty=true;return json(res,200,publicPlayer(pl))}return json(res,400,{error:'unknown item'})
  }
+ if(p==='/api/use-shield'&&req.method==='POST'){const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(pl.shieldTokens<1)return json(res,400,{error:'no shield'});pl.shieldTokens--;dirty=true;return json(res,200,publicPlayer(pl))}
  if(p==='/api/chat'&&req.method==='GET')return json(res,200,db.chat.slice(-50));
  if(p==='/api/chat'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'chat',1200))return json(res,429,{error:'slow down'});
@@ -88,4 +89,4 @@ const server=http.createServer(async(req,res)=>{
  if(p==='/api/multiplayer/players'&&req.method==='GET')return json(res,200,[...clients.values()].map(v=>({id:v.player,name:v.name,lane:v.state.lane,score:v.state.score,zone:v.state.zone})));
  return json(res,404,{error:'not found'})
 });
-server.keepAliveTimeout=65000;server.headersTimeout=66000;server.listen(PORT,'0.0.0.0',()=>console.log(`Keke Dodge v3 listening on ${PORT}`));
+server.keepAliveTimeout=65000;server.headersTimeout=66000;server.listen(PORT,'0.0.0.0',()=>console.log(`Keke Dodge v4 listening on ${PORT}`));

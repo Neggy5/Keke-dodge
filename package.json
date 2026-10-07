@@ -1,12 +1,1 @@
-{
-  "name": "keke-dodge-online",
-  "version": "3.0.0",
-  "description": "Multiplayer Abuja traffic runner with persistent player profiles, economy, leaderboard and live chat",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
+{"name":"keke-dodge-online","version":"4.0.0","description":"Keke Dodge: multiplayer Abuja traffic runner","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18"}}
