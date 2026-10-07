@@ -1,4 +1,4 @@
-// Keke Dodge Online v5 — multiplayer Abuja runner
+// Keke Dodge Online v6 — multiplayer Abuja runner
 const http=require('http'),fs=require('fs'),path=require('path'),crypto=require('crypto');
 const PORT=Number(process.env.PORT||3000),DIR=process.env.DATA_DIR||path.join(__dirname,'data'),FILE=path.join(DIR,'db.json'),MAX_BODY=12000;
 fs.mkdirSync(DIR,{recursive:true});
@@ -28,15 +28,17 @@ function validName(n){return clean(n,16).replace(/[^a-zA-Z0-9 _.-]/g,'').trim()}
 function unique(n,id){return !db.players.some(p=>p.id!==id&&p.name.toLowerCase()===n.toLowerCase())}
 const day=(o=0)=>new Date(Date.now()+o*864e5).toISOString().slice(0,10);
 const seedOf=d=>{let h=2166136261;for(const c of 'keke'+d){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+const MIS=d=>{const k=seedOf(d)%3;return[{id:'coins',txt:'Collect coins',t:[30,45,60][k],r:20,key:'coins'},{id:'near',txt:'Close calls',t:[6,9,12][k],r:25,key:'near'},{id:'dist',txt:'Ride metres',t:[1800,2600,3600][k],r:30,key:'dist'}]};
+const misView=p=>{const d=day(),m=p.mis&&p.mis.day===d?p.mis:{day:d,prog:{},done:[]};return MIS(d).map(x=>({id:x.id,txt:x.txt,target:x.t,prog:Math.min(x.t,m.prog[x.key]||0),done:m.done.includes(x.id),reward:x.r}))};
 const SKINS={green:0,lagos:150,midnight:250,gold:400};
-function publicPlayer(p){const t=day();return{id:p.id,name:p.name,coins:p.coins,best:p.best,shieldTokens:p.shieldTokens,skin:p.skin||'green',skins:['green',...(p.skins||[])],streak:p.lastDaily===t||p.lastDaily===day(-1)?(p.streak||0):0,dailyDone:p.lastDaily===t,dailyBest:p.daily&&p.daily.day===t?p.daily.best:0}}
+function publicPlayer(p){const t=day();return{id:p.id,name:p.name,coins:p.coins,best:p.best,shieldTokens:p.shieldTokens,skin:p.skin||'green',skins:['green',...(p.skins||[])],streak:p.lastDaily===t||p.lastDaily===day(-1)?(p.streak||0):0,dailyDone:p.lastDaily===t,dailyBest:p.daily&&p.daily.day===t?p.daily.best:0,items:{magnet:(p.items&&p.items.magnet)||0,revive:(p.items&&p.items.revive)||0},missions:misView(p)}}
 function dailyBoard(){const t=day();return db.players.filter(p=>p.daily&&p.daily.day===t).sort((a,b)=>b.daily.best-a.daily.best).slice(0,10).map((p,i)=>({rank:i+1,n:p.name,s:p.daily.best}))}
 
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost'),p=u.pathname;
  if(req.method==='OPTIONS'){res.writeHead(204,{'access-control-allow-origin':'*','access-control-allow-headers':'content-type,authorization'});return res.end()}
  if(req.method==='GET'&&(p==='/'||p==='/index.html'))return fs.readFile(path.join(__dirname,'public','index.html'),(e,b)=>{if(e)return json(res,500,{error:'missing index.html'});res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-cache'});res.end(b)});
- if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:5,uptime:Math.round(process.uptime()),time:Date.now()});
+ if(req.method==='GET'&&p==='/health')return json(res,200,{ok:true,version:6,uptime:Math.round(process.uptime()),time:Date.now()});
  if(req.method==='GET'&&p==='/api/stats')return json(res,200,stats());
 
  if(p==='/api/profile'&&req.method==='POST'){
@@ -52,7 +54,7 @@ const server=http.createServer(async(req,res)=>{
  if(p==='/api/profile'&&req.method==='GET'){const pl=player(req);if(!pl)return json(res,401,{error:'unauthorized'});return json(res,200,publicPlayer(pl))}
  if(p==='/api/run'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'run',800))return json(res,429,{error:'slow down'});
-   const b=await body(req),id=newId();runs.set(id,{player:pl.id,at:Date.now(),daily:b.daily?day():null});return json(res,200,{id,...(b.daily?{seed:seedOf(day())}:{})})
+   const b=await body(req),id=newId(),used={};pl.items=pl.items||{};for(const k of['magnet','revive'])if(b[k]&&(pl.items[k]||0)>0){pl.items[k]--;used[k]=1;dirty=true}runs.set(id,{player:pl.id,at:Date.now(),daily:b.daily?day():null});return json(res,200,{id,used,player:publicPlayer(pl),...(b.daily?{seed:seedOf(day())}:{})})
  }
  if(p==='/api/scores'&&req.method==='GET')return json(res,200,top());
  if(p==='/api/daily'&&req.method==='GET')return json(res,200,{day:day(),board:dailyBoard()});
@@ -74,12 +76,14 @@ const server=http.createServer(async(req,res)=>{
    if(sec<1||distance>maxDist||score>distance/10+earned*12+Number(b.combo||0)*2+100)return json(res,400,{error:'score validation failed'});
    if(score>pl.best)pl.best=score;
    let bonus=0;if(r.daily&&(r.daily===day()||r.daily===day(-1))){const d=r.daily;if(!pl.daily||pl.daily.day!==d)pl.daily={day:d,best:0};if(score>pl.daily.best)pl.daily.best=score;if(pl.lastDaily!==d){pl.streak=pl.lastDaily&&new Date(d)-new Date(pl.lastDaily)===864e5?(pl.streak||0)+1:1;pl.lastDaily=d;bonus=10*Math.min(pl.streak,7)}}
-   pl.coins+=earned+bonus;db.scores.push({player:pl.id,s:score,t:Date.now()});db.scores=db.scores.slice(-500);dirty=true;
-   const result=top();broadcast('leaderboard',result);return json(res,200,{leaderboard:result,player:publicPlayer(pl),earned,bonus,daily:dailyBoard()});
+   let mb=0;const md=day(),mdone=[];if(!pl.mis||pl.mis.day!==md)pl.mis={day:md,prog:{},done:[]};const pr=pl.mis.prog;pr.coins=(pr.coins||0)+earned;pr.near=(pr.near||0)+Math.max(0,Math.min(60,Math.floor(Number(b.combo)||0)));pr.dist=(pr.dist||0)+distance;
+   for(const x of MIS(md))if(!pl.mis.done.includes(x.id)&&pr[x.key]>=x.t){pl.mis.done.push(x.id);mb+=x.r;mdone.push(x.txt)}
+   pl.coins+=earned+bonus+mb;db.scores.push({player:pl.id,s:score,t:Date.now()});db.scores=db.scores.slice(-500);dirty=true;
+   const result=top();broadcast('leaderboard',result);return json(res,200,{leaderboard:result,player:publicPlayer(pl),earned,bonus,missionBonus:mb,missionsDone:mdone,daily:dailyBoard()});
  }
  if(p==='/api/shop'&&req.method==='POST'){
    const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(rate(req,'shop',700))return json(res,429,{error:'slow down'});
-   const b=await body(req);if(b.item==='shield'){if(pl.coins<50)return json(res,400,{error:'need 50 coins'});pl.coins-=50;pl.shieldTokens++;dirty=true;return json(res,200,publicPlayer(pl))}return json(res,400,{error:'unknown item'})
+   const b=await body(req);const IT={magnet:40,revive:90};if(IT[b.item]){if(pl.coins<IT[b.item])return json(res,400,{error:'need ₦'+IT[b.item]});pl.coins-=IT[b.item];pl.items=pl.items||{};pl.items[b.item]=(pl.items[b.item]||0)+1;dirty=true;return json(res,200,publicPlayer(pl))}if(b.item==='shield'){if(pl.coins<50)return json(res,400,{error:'need 50 coins'});pl.coins-=50;pl.shieldTokens++;dirty=true;return json(res,200,publicPlayer(pl))}return json(res,400,{error:'unknown item'})
  }
  if(p==='/api/use-shield'&&req.method==='POST'){const pl=player(req);if(!pl)return json(res,401,{error:'profile required'});if(pl.shieldTokens<1)return json(res,400,{error:'no shield'});pl.shieldTokens--;dirty=true;return json(res,200,publicPlayer(pl))}
  if(p==='/api/chat'&&req.method==='GET')return json(res,200,db.chat.slice(-50));

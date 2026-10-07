@@ -1,4 +1,3 @@
-# Keke Dodge v5
-New: daily ride (same road for everyone, daily board, streak bonus), keke skins bought with coins, installable app, haptics, sound toggle.
-Same db.json as v3/v4, so riders, coins and scores carry over.
-Railway: volume at /data, DATA_DIR=/data, start `node server.js`. /health reports version 5.
+# Keke Dodge v6
+New: share-score image, daily missions, Magnet and Second chance power-ups. Plus v5: daily ride, skins, install, haptics.
+Same db.json as earlier versions. Railway: volume /data, DATA_DIR=/data. /health reports version 6.
